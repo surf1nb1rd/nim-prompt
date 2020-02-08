@@ -392,11 +392,13 @@ proc deleteWord*(p: Prompt) =
   if p.line.len == 0:
     return
   var startPos = p.cursorPos
-  while startPos < p.line.len - 1 and p.line[startPos] in wordSeparators:
+  while startPos < p.line.len and p.line[startPos] in wordSeparators:
     inc startPos
   var sepPos = p.line.find(wordSeparators, startPos)
   if sepPos == -1:
     sepPos = p.line.len
+  if sepPos - 1 < p.cursorPos:
+    return
   p.line.delete(p.cursorPos, sepPos - 1)
 
 proc home*(p: Prompt) =
