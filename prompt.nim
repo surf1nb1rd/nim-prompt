@@ -62,6 +62,7 @@ type
     maxHistory*: int
     historyFileLines: int
     autoComplete: AutoCompleteProc
+    colorize: ColorizeProc
     menu: seq[string]
     menuReplacedChars: int
     activeMenuItem: int
@@ -73,9 +74,12 @@ type
 
   AutoCompleteProc = proc(line: seq[Rune], cursorpos: int): seq[string] {.gcsafe.}
 
+  ColorizeProc = proc(line: seq[Rune]): seq[Rune] {.gcsafe.}
+
 proc init*(_: type Prompt,
            promptIndicator = defaultpromptIndicator,
-           autoComplete: AutoCompleteProc = nil): Prompt =
+           autoComplete: AutoCompleteProc = nil,
+           colorize: ColorizeProc = nil): Prompt =
   result = Prompt(
     cursorPos: 0,
     line: @[],
@@ -84,6 +88,7 @@ proc init*(_: type Prompt,
     histIndex: 0,
     historyFileLines: 0,
     autoComplete: autoComplete,
+    colorize: colorize,
     menu: @[],
     menuReplacedChars: 0,
     activeMenuItem: 0,
@@ -112,7 +117,10 @@ proc showPrompt*(p: Prompt) =
   hideCursor()
 
   eraseLine()
-  stdout.write(p.promptIndicator, $p.line)
+  if p.colorize != nil:
+    stdout.write(p.promptIndicator, $p.colorize(p.line))
+  else:
+    stdout.write(p.promptIndicator, $p.line)
 
   p.drawnMenuItems = p.menu.len
   if p.menu.len > 0:
