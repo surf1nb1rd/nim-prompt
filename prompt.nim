@@ -296,7 +296,6 @@ proc insert(p: Prompt, c: Rune) =
 
 proc deleteAt(p: Prompt, pos: int): bool =
   if pos >= 0 and pos < p.line.len:
-    var c = p.line[pos]
     p.line.delete(pos, pos)
     return true
   return false
@@ -485,7 +484,6 @@ when isMainModule:
 
   test "backspace word":
     template testCase(pos, finalText, finalPos) =
-      var unicodeText = toRunes(text)
       var p = new Prompt
       p.line = toRunes(text)
       p.cursorPos = pos
@@ -504,7 +502,6 @@ when isMainModule:
 
   test "delete word":
     template testCase(pos, finalText) =
-      var unicodeText = toRunes(text)
       var p = new Prompt
       p.line = toRunes(text)
       p.cursorPos = pos
@@ -544,10 +541,4 @@ when isMainModule:
     testCase("af", 1, "af", "af", 2)
     testCase("-ab", 3, "abcd", "-abcd", 5)
     testCase("-ab abc", 2, "abcd", "-abcd abc", 5)
-
-  test "insert completion":
-    template testCase(l, pos, completion) =
-      var p = new Prompt
-      p.line = l
-      p.cursorPos = pos
 

@@ -37,7 +37,7 @@ proc readRune(): Rune =
   while true:
     var
       c: char
-      nread: csize
+      nread: int
 
     # Continue reading if interrupted by signal.
     while true:
