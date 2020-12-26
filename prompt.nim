@@ -62,6 +62,7 @@ type
     maxHistory*: int
     historyFileLines: int
     autoComplete: AutoCompleteProc
+    colorize: ColorizeProc
     menu: seq[string]
     menuReplacedChars: int
     activeMenuItem: int
@@ -73,9 +74,39 @@ type
 
   AutoCompleteProc = proc(line: seq[Rune], cursorpos: int): seq[string] {.gcsafe.}
 
+  ColorizeProc = proc(line: seq[Rune]): seq[Rune] {.gcsafe.}
+
+proc printLen(input: string): int =
+  ## This procedure will take a string and count how many characters would be
+  ## printed to the terminal, ignoring ANSI escapes codes.
+  var
+    lastpos = 0
+    pos = 0
+  while pos < input.len:
+    if input[pos] == 0x1b.char and pos+1 < input.len:
+      if input[pos+1] == '[':
+        if lastpos != pos:
+          result += pos - lastpos
+        pos += 2
+        lastpos = pos
+        while input[pos] in {0x30.char..0x3F.char}:
+          pos += 1
+        lastpos = pos
+        while input[pos] in {0x20.char..0x2F.char}:
+          pos += 1
+        assert input[pos] in {0x40.char..0x7E.char}, "Final byte of sequence at position " & $pos & " not in range 0x40-0x7E is " & $input[pos].byte
+        lastpos = pos + 1
+      else:
+        assert input[pos+1] notin {0x40.char..0x5F.char}, "Unknown escape sequence at position " & $pos & ", currently only CSI sequences are recognised"
+    pos += 1
+
+  if lastpos != input.len:
+    result += input.len - lastpos
+
 proc init*(_: type Prompt,
            promptIndicator = defaultpromptIndicator,
-           autoComplete: AutoCompleteProc = nil): Prompt =
+           autoComplete: AutoCompleteProc = nil,
+           colorize: ColorizeProc = nil): Prompt =
   result = Prompt(
     cursorPos: 0,
     line: @[],
@@ -84,6 +115,7 @@ proc init*(_: type Prompt,
     histIndex: 0,
     historyFileLines: 0,
     autoComplete: autoComplete,
+    colorize: colorize,
     menu: @[],
     menuReplacedChars: 0,
     activeMenuItem: 0,
@@ -112,11 +144,14 @@ proc showPrompt*(p: Prompt) =
   hideCursor()
 
   eraseLine()
-  stdout.write(p.promptIndicator, $p.line)
+  if p.colorize != nil:
+    stdout.write(p.promptIndicator, $p.colorize(p.line))
+  else:
+    stdout.write(p.promptIndicator, $p.line)
 
   p.drawnMenuItems = p.menu.len
   if p.menu.len > 0:
-    let menuOffset = repeat(" ", p.promptIndicator.len + p.cursorPos - p.menuReplacedChars - 1)
+    let menuOffset = repeat(" ", p.promptIndicator.printLen + p.cursorPos - p.menuReplacedChars - 1)
     var longestMenuItem = 0
     for item in p.menu:
       if item.len > longestMenuItem:
@@ -146,7 +181,7 @@ proc showPrompt*(p: Prompt) =
   var cursorPos = 0
   for i in 0 ..< min(p.line.len, p.cursorPos):
     cursorPos += calcWidth(p.line[i])
-  cursorForward(p.promptIndicator.len + cursorPos)
+  cursorForward(p.promptIndicator.printLen + cursorPos)
   showCursor()
 
   stdout.flushFile()
@@ -288,7 +323,6 @@ proc insert(p: Prompt, c: Rune) =
 
 proc deleteAt(p: Prompt, pos: int): bool =
   if pos >= 0 and pos < p.line.len:
-    var c = p.line[pos]
     p.line.delete(pos, pos)
     return true
   return false
@@ -392,11 +426,13 @@ proc deleteWord*(p: Prompt) =
   if p.line.len == 0:
     return
   var startPos = p.cursorPos
-  while startPos < p.line.len - 1 and p.line[startPos] in wordSeparators:
+  while startPos < p.line.len and p.line[startPos] in wordSeparators:
     inc startPos
   var sepPos = p.line.find(wordSeparators, startPos)
   if sepPos == -1:
     sepPos = p.line.len
+  if sepPos - 1 < p.cursorPos:
+    return
   p.line.delete(p.cursorPos, sepPos - 1)
 
 proc home*(p: Prompt) =
@@ -475,7 +511,6 @@ when isMainModule:
 
   test "backspace word":
     template testCase(pos, finalText, finalPos) =
-      var unicodeText = toRunes(text)
       var p = new Prompt
       p.line = toRunes(text)
       p.cursorPos = pos
@@ -494,7 +529,6 @@ when isMainModule:
 
   test "delete word":
     template testCase(pos, finalText) =
-      var unicodeText = toRunes(text)
       var p = new Prompt
       p.line = toRunes(text)
       p.cursorPos = pos
@@ -534,10 +568,4 @@ when isMainModule:
     testCase("af", 1, "af", "af", 2)
     testCase("-ab", 3, "abcd", "-abcd", 5)
     testCase("-ab abc", 2, "abcd", "-abcd abc", 5)
-
-  test "insert completion":
-    template testCase(l, pos, completion) =
-      var p = new Prompt
-      p.line = l
-      p.cursorPos = pos
 
