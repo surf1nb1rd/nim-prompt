@@ -1,8 +1,6 @@
-import os, terminal, termios, unicode, lists, unicodedb/widths, system, strutils
-from strutils import parseInt
+import std / [os, terminal, termios, unicode, lists, strutils, exitprocs]
+import unicodedb/widths
 from sequtils import delete
-
-system.addQuitProc(resetAttributes)
 
 const
   ESC* = 27
@@ -107,6 +105,7 @@ proc init*(_: type Prompt,
            promptIndicator = defaultpromptIndicator,
            autoComplete: AutoCompleteProc = nil,
            colorize: ColorizeProc = nil): Prompt =
+  addExitProc(resetAttributes)
   result = Prompt(
     cursorPos: 0,
     line: @[],
@@ -323,7 +322,7 @@ proc insert(p: Prompt, c: Rune) =
 
 proc deleteAt(p: Prompt, pos: int): bool =
   if pos >= 0 and pos < p.line.len:
-    p.line.delete(pos, pos)
+    p.line.delete(pos..pos)
     return true
   return false
 
@@ -419,7 +418,7 @@ proc backspaceWord*(p: Prompt) =
   while startPos > 0 and p.line[startPos] in wordSeparators:
     dec startPos
   var sepPos = rfind(p.line, wordSeparators, startPos)
-  p.line.delete(sepPos + 1, p.cursorPos - 1)
+  p.line.delete(sepPos + 1 .. p.cursorPos - 1)
   p.cursorPos = sepPos + 1
 
 proc deleteWord*(p: Prompt) =
@@ -433,7 +432,7 @@ proc deleteWord*(p: Prompt) =
     sepPos = p.line.len
   if sepPos - 1 < p.cursorPos:
     return
-  p.line.delete(p.cursorPos, sepPos - 1)
+  p.line.delete(p.cursorPos .. sepPos - 1)
 
 proc home*(p: Prompt) =
   p.cursorPos = 0

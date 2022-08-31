@@ -1,7 +1,7 @@
 mode = ScriptMode.Verbose
 
 packageName   = "prompt"
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Surf1nb1rd"
 description   = "Feature-rich readline replacement"
 license       = "BSD2"
