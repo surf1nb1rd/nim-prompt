@@ -70,9 +70,9 @@ type
 
   ProgressBar* = ref object of Widget
 
-  AutoCompleteProc = proc(line: seq[Rune], cursorpos: int): seq[string] {.gcsafe.}
+  AutoCompleteProc = proc(line: seq[Rune], cursorpos: int): seq[string]
 
-  ColorizeProc = proc(line: seq[Rune]): seq[Rune] {.gcsafe.}
+  ColorizeProc = proc(line: seq[Rune]): seq[Rune]
 
 proc printLen(input: string): int =
   ## This procedure will take a string and count how many characters would be
