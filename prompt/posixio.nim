@@ -37,7 +37,7 @@ proc readRune(): Rune =
   while true:
     var
       c: char
-      nread: csize
+      nread: int
 
     # Continue reading if interrupted by signal.
     while true:
@@ -164,7 +164,7 @@ template handleKeyPress() =
         continue
       var k2, k3: char
       k2 = readEscapeChar()
-      # p.writeLine("KEY2:" & $k2)
+      # p.writeLine("KEY2: " & $k2)
       if k2 == 'f':
         # alt-f
         p.skipWordRight()
@@ -176,7 +176,7 @@ template handleKeyPress() =
       k3 = readEscapeChar()
       # p.writeLine("KEY3: " & $k3)
       if k2 == '[':
-        if k3 >= '0' and k3 <= '9':
+        if k3 in '0'..'9':
           case k3
           of '1':
             # alt combination
@@ -225,6 +225,16 @@ template handleKeyPress() =
             # page down
             p.pageDown()
             ignoreNextChar()
+          of '7':
+            if not inputAvailable():
+              continue
+            if readEscapeChar() == '~':
+              p.home()
+          of '8':
+            if not inputAvailable():
+              continue
+            if readEscapeChar() == '~':
+              p.endKey()
           else:
             discard
         else:

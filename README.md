@@ -6,7 +6,8 @@ A library for building powerful interactive prompts inspired by [python-prompt-t
 
 #### Projects using nim-prompt
 
-* [nim-chronicles](https://github.com/status-im/nim-chronicles/). The log filtering tool chronicles_tail was the original project that lead to the creation of this library.
+* [nim-chronicles](https://github.com/status-im/nim-chronicles/). The log filtering tool `chronicles_tail` was the original
+project that lead to the creation of this library.
 
 ## Features
 
@@ -41,7 +42,8 @@ An optional history file can be specified for each user program.
 
 ### Unicode aware
 
-nim-prompt will correctly handle and display all unicode characters. In the public API, all procs use UTF-8 encoded strings on all platforms.
+nim-prompt will correctly handle and display all unicode characters. In the public API, all procs use UTF-8 encoded
+strings on all platforms.
 
 ### Multiple platform support
 
@@ -50,6 +52,11 @@ We have confirmed nim-prompt works fine in the following terminals:
 * iTerm2, Terminal.app (macOS)
 * Command Prompt (Windows)
 * gnome-terminal (Ubuntu)
+
+### Live-colorized output
+
+By registering a procedure that can transform the output of the prompt it is possible to colour the user input live as
+they type. Just make sure not to change the length of the output as that messes with the cursor position identifier.
 
 ## License
 
